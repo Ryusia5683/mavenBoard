@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="ino.web.freeBoard.mapper.FreeBoardMapper">
+
+
+	<select id="freeBoardGetList" resultType="freeBoardDto" parameterType="map" > <!-- resultType="ino.web.board.dto.BoardDto" -->
+		SELECT * FROM (
+			SELECT ROW_NUMBER() OVER (ORDER BY NUM) RNUM, DECODE(CODE_TYPE, 01, '자유', 02, '익명', 'QnA') as codeType, NUM, NAME, 
+			TITLE, CONTENT, TO_CHAR(REGDATE , 'YYYY/MM/DD') AS REGDATE FROM FREEBOARD 
+			<where>
+				1 = 1
+				<if test='search != null and search != 0'>
+					<choose>
+						<when test='search == 1'>
+							and CODE_TYPE = #{keyword1}
+						</when>
+						<when test='search == 2'>
+							and NUM = #{keyword1}
+						</when>
+						<when test='search == 3'>
+							and TITLE like '%' ||  #{keyword1} || '%'
+						</when>
+						<when test='search == 4'>
+							and NAME like '%' ||  #{keyword1} || '%'
+						</when>
+						<when test='search == 5'>
+							and CONTENT like '%' ||  #{keyword1} || '%'
+						</when>
+						<when test='search == 6'>
+							and TO_CHAR(REGDATE, 'YYYYMMDD') BETWEEN #{keyword1} and #{keyword2}
+						</when>
+					</choose>
+				</if>
+			</where>
+			) WHERE RNUM BETWEEN #{start} AND #{end}
+	</select>
+
+	<insert id="freeBoardInsertPro" parameterType="freeBoardDto">
+		INSERT INTO FREEBOARD(CODE_TYPE, NUM, TITLE, NAME, REGDATE, CONTENT)
+		VALUES( #{codeType}, FREEBOARDNUM_SEQ.NEXTVAL, #{title}, #{name}, SYSDATE, #{content})
+	</insert>
+
+	<select id="freeBoardDetailByNum" resultType="freeBoardDto" parameterType="int">
+		SELECT CODE_TYPE as codeType, NUM, TITLE, NAME, TO_CHAR(REGDATE,'YYYY/MM/DD') REGDATE, CONTENT FROM FREEBOARD
+		WHERE NUM=#{num}
+	</select>
+
+	<select id="freeBoardNewNum" resultType="int">
+		SELECT MAX(NUM)
+		FROM FREEBOARD
+	</select>
+
+	<update id="freeBoardModify" parameterType="freeBoardDto">
+		UPDATE FREEBOARD
+		SET CODE_TYPE = #{codeType}
+				, TITLE = #{title}
+				, CONTENT = #{content}
+		WHERE NUM = #{num}
+
+	</update>
+
+	<update id="freeBoardDelete" parameterType="String">
+		DELETE FROM FREEBOARD
+		WHERE NUM
+		= #{num}
+
+	</update>
+
+	<update id="freeBoardMultiDelete" parameterType="List">
+		DELETE FROM FREEBOARD
+		WHERE NUM
+		in ( 
+		<foreach collection="list" item="item" separator=",">
+			#{item}
+		</foreach>
+		)
+
+	</update>
+
+	<select id="freeBoardAllCount" resultType="int">
+		SELECT COUNT(NUM)
+		FROM FREEBOARD
+	</select>
+	<select id="freeBoardListCount" resultType="int" parameterType="map">
+		SELECT COUNT(NUM)
+		FROM FREEBOARD
+		<where>
+			1 = 1
+			<if test='search != null and search != 0'>
+				<choose>
+					<when test='search == 1'>
+						and CODE_TYPE = #{keyword1}
+					</when>
+					<when test='search == 2'>
+						and NUM = #{keyword1}
+					</when>
+					<when test='search == 3'>
+						and TITLE like '%' ||  #{keyword1} || '%'
+					</when>
+					<when test='search == 4'>
+						and NAME like '%' ||  #{keyword1} || '%'
+					</when>
+					<when test='search == 5'>
+						and CONTENT like '%' ||  #{keyword1} || '%'
+					</when>
+					<when test='search == 6'>
+						and TO_CHAR(REGDATE, 'YYYYMMDD') BETWEEN #{keyword1} and #{keyword2}
+					</when>
+				</choose>
+			</if>
+		</where>
+	</select>
+</mapper>
